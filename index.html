@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN Mini App Constructor</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#07090f;--panel:#0c0f1a;--card:#111827;--border:#1a2238;--border2:#243055;
+  --accent:#3b82f6;--accent2:#60a5fa;--text:#dde3f5;--muted:#3d4f70;--muted2:#5d6f90;
+}
+html,body{height:100%;font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.layout{display:flex;height:100vh;}
+
+.sidebar{width:290px;min-width:290px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-head{padding:14px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sidebar-head .logo{font-size:18px;width:32px;height:32px;background:#0f1a30;border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.sidebar-head h2{font-size:13px;font-weight:800;letter-spacing:.5px;color:var(--text);}
+.sidebar-head p{font-size:10px;color:var(--muted2);margin-top:1px;}
+
+.tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border);}
+.tab{flex:1;padding:9px 2px;font-size:10px;font-weight:700;text-align:center;cursor:pointer;color:var(--muted2);border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.2px;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+
+.tab-content{flex:1;overflow-y:auto;padding:12px;display:none;}
+.tab-content.active{display:block;}
+
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;}
+.fg input,.fg textarea,.fg select{width:100%;background:#0a0d18;border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Manrope',sans-serif;font-size:12px;padding:7px 9px;outline:none;transition:border .15s;}
+.fg input:focus,.fg textarea:focus{border-color:var(--accent);}
+.fg textarea{resize:vertical;min-height:52px;}
+.fg input[type=color]{height:32px;padding:2px 3px;cursor:pointer;}
+
+.color-row{display:flex;gap:6px;align-items:center;}
+.color-row input[type=color]{width:40px;height:30px;flex-shrink:0;border-radius:6px;}
+.color-row input[type=text]{flex:1;font-family:'JetBrains Mono',monospace;font-size:11px;}
+
+.sep{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+.plan-item{background:#0a0d18;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;position:relative;}
+.plan-badge{font-size:9px;font-weight:700;background:var(--border);color:var(--muted2);padding:2px 7px;border-radius:20px;display:inline-block;margin-bottom:7px;}
+.plan-fields{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.plan-fields input{padding:5px 7px;font-size:11px;}
+.plan-fields input.full{grid-column:span 2;}
+.del-btn{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;line-height:1;}
+.del-btn:hover{color:#ef4444;background:#1a0808;}
+.period-mini{margin-top:8px;}
+.period-mini-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.period-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:3px;}
+.period-row input{padding:4px 5px;font-size:10px;}
+.add-period-btn{font-size:10px;color:var(--accent2);background:none;border:1px dashed var(--border2);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:'Manrope',sans-serif;margin-top:3px;transition:all .12s;}
+.add-period-btn:hover{border-color:var(--accent);background:#0a1525;}
+.add-btn{width:100%;padding:8px;background:transparent;border:1px dashed var(--border2);border-radius:8px;color:var(--muted2);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Manrope',sans-serif;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent2);background:#0a1525;}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;}
+.toggle-row span{font-size:12px;color:var(--muted2);}
+.toggle{width:34px;height:18px;background:var(--border2);border-radius:9px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;}
+.toggle.on::after{transform:translateX(16px);}
+.range-row{display:flex;align-items:center;gap:8px;}
+.range-row input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer;}
+.range-val{font-size:11px;color:var(--muted2);min-width:30px;text-align:right;font-family:'JetBrains Mono',monospace;}
+
+.chip-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.chip{padding:4px 10px;border-radius:6px;border:1px solid var(--border2);font-size:11px;font-weight:600;color:var(--muted2);cursor:pointer;transition:all .12s;font-family:'Manrope',sans-serif;background:transparent;}
+.chip:hover{border-color:var(--accent);color:var(--accent2);}
+.chip.active{border-color:var(--accent);color:var(--accent2);background:#0f1e38;}
+
+.preview-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--bg);padding:16px;gap:12px;overflow:auto;}
+.preview-top{display:flex;align-items:center;gap:10px;width:100%;max-width:460px;}
+.preview-label{font-size:11px;color:var(--muted2);font-weight:600;}
+.page-nav{display:flex;gap:5px;flex:1;}
+.page-btn{padding:5px 9px;font-size:10px;font-weight:700;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--muted2);cursor:pointer;font-family:'Manrope',sans-serif;transition:all .12s;letter-spacing:.3px;}
+.page-btn.active{border-color:var(--accent);color:var(--accent2);background:#0d1e38;}
+.dl-btn{padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;transition:background .15s;white-space:nowrap;}
+.dl-btn:hover{background:#2563eb;}
+
+.phone-wrap{position:relative;width:375px;}
+.phone-frame{width:375px;height:680px;border-radius:38px;background:#08090f;border:2px solid #1e2540;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 60px #080e1e,0 0 0 1px #0f1830;}
+.phone-frame iframe{width:100%;flex:1;border:none;}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:22px;background:#08090f;border-radius:0 0 14px 14px;z-index:10;}
+
+.ai-panel{width:300px;min-width:300px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.ai-head{padding:12px 14px;border-bottom:1px solid var(--border);}
+.ai-head h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text);}
+.ai-head p{font-size:10px;color:var(--muted2);margin-top:2px;}
+.ai-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;}
+.msg{padding:9px 11px;border-radius:10px;font-size:12px;line-height:1.55;max-width:92%;}
+.msg.ai{background:var(--card);border:1px solid var(--border);color:var(--text);align-self:flex-start;}
+.msg.user{background:#152040;border:1px solid #253a60;color:#c8deff;align-self:flex-end;}
+.dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--muted2);animation:blink 1.2s infinite;margin:0 2px;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.qps{padding:0 10px 6px;display:flex;flex-wrap:wrap;gap:4px;}
+.qp{font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);border:1px solid var(--border);color:var(--muted2);cursor:pointer;font-family:'Manrope',sans-serif;transition:all .12s;}
+.qp:hover{border-color:var(--accent);color:var(--accent2);}
+.ai-in-row{padding:10px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:flex-end;}
+.ai-in-row textarea{flex:1;background:#0a0d18;border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Manrope',sans-serif;font-size:12px;padding:8px 10px;outline:none;resize:none;min-height:36px;max-height:100px;transition:border .15s;}
+.ai-in-row textarea:focus{border-color:var(--accent);}
+.send-btn{width:34px;height:34px;border-radius:9px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:background .15s;}
+.send-btn:hover{background:#2563eb;}
+.send-btn:disabled{background:var(--border);cursor:not-allowed;}
+
+.fx-chip{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:#0a0d18;cursor:pointer;transition:all .15s;margin-bottom:6px;}
+.fx-chip:hover{border-color:var(--border2);}
+.fx-chip.active{border-color:var(--accent);background:#0d1e38;}
+.fx-chip-icon{font-size:15px;width:24px;text-align:center;}
+.fx-chip-label{font-size:12px;font-weight:600;color:var(--text);}
+.fx-chip-desc{font-size:10px;color:var(--muted2);margin-top:1px;}
+.fx-check{margin-left:auto;width:16px;height:16px;border-radius:4px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .15s;color:transparent;}
+.fx-chip.active .fx-check{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<div class="sidebar">
+  <div class="sidebar-head">
+    <div class="logo">🛠</div>
+    <div><h2>VPN Constructor</h2><p>Mini App Builder · v2.0</p></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('brand')">Бренд</div>
+    <div class="tab" onclick="switchTab('plans')">Тарифы</div>
+    <div class="tab" onclick="switchTab('style')">Стиль</div>
+    <div class="tab" onclick="switchTab('fx')">✨ FX</div>
+  </div>
+
+  <div class="tab-content active" id="tab-brand">
+    <div class="sep" style="margin-top:0;">Идентичность</div>
+    <div class="fg"><label>Название бота / VPN</label><input id="f-botname" value="BORZ VPN" oninput="upd()"></div>
+    <div class="fg"><label>Эмодзи / иконка</label><input id="f-emoji" value="🐺" oninput="upd()" style="font-size:17px;"></div>
+    <div class="fg"><label>Имя пользователя</label><input id="f-username" value="Mns" oninput="upd()"></div>
+    <div class="fg"><label>Группа пользователя</label><input id="f-usergroup" value="Базовый юзер" oninput="upd()"></div>
+    <div class="sep">Главная страница</div>
+    <div class="fg"><label>Заголовок кнопки подписки</label><input id="f-cta" value="Оформить подписку" oninput="upd()"></div>
+    <div class="fg"><label>Подзаголовок</label><input id="f-ctasub" value="Выберите тариф и оплатите" oninput="upd()"></div>
+    <div class="fg"><label>Текст кнопки «Купить»</label><input id="f-btnlabel" value="Купить" oninput="upd()"></div>
+    <div class="sep">Способы оплаты</div>
+    <div class="fg"><label>Способ 1 — название</label><input id="f-p1n" value="СБП + Карты" oninput="upd()"></div>
+    <div class="fg"><label>Способ 1 — провайдер</label><input id="f-p1d" value="Оплата через Platega" oninput="upd()"></div>
+    <div class="fg"><label>Способ 1 — лимит</label><input id="f-p1r" value="0 – 50000 ₽" oninput="upd()"></div>
+    <div class="fg"><label>Способ 2 — название</label><input id="f-p2n" value="Telegram Stars" oninput="upd()"></div>
+    <div class="fg"><label>Способ 2 — провайдер</label><input id="f-p2d" value="Оплата через Telegram Stars" oninput="upd()"></div>
+    <div class="fg"><label>Способ 2 — лимит</label><input id="f-p2r" value="1 – 10000 ₽" oninput="upd()"></div>
+    <div class="sep">Блоки интерфейса</div>
+    <div class="toggle-row"><span>Логотип в шапке</span><div class="toggle on" id="t-logo" onclick="tog(this)"></div></div>
+    <div class="toggle-row"><span>Блок «Баланс»</span><div class="toggle on" id="t-bal" onclick="tog(this)"></div></div>
+    <div class="toggle-row"><span>Блок «Рефералы»</span><div class="toggle on" id="t-ref" onclick="tog(this)"></div></div>
+    <div class="toggle-row"><span>Бейдж группы / скидки</span><div class="toggle on" id="t-grp" onclick="tog(this)"></div></div>
+  </div>
+
+  <div class="tab-content" id="tab-plans">
+    <div class="sep" style="margin-top:0;">Тарифы</div>
+    <div id="plans-list"></div>
+    <button class="add-btn" onclick="addPlan()">+ Добавить тариф</button>
+  </div>
+
+  <div class="tab-content" id="tab-style">
+    <div class="sep" style="margin-top:0;">Цветовые пресеты</div>
+    <div class="chip-group">
+      <div class="chip active" onclick="applyPreset('dark',this)">🌑 Тёмная</div>
+      <div class="chip" onclick="applyPreset('light',this)">☀️ Светлая</div>
+      <div class="chip" onclick="applyPreset('green',this)">🟢 Зелёная</div>
+      <div class="chip" onclick="applyPreset('purple',this)">💜 Пурпур</div>
+      <div class="chip" onclick="applyPreset('red',this)">🔴 Красная</div>
+    </div>
+    <div class="sep">Цвета</div>
+    <div class="fg"><label>Акцент (кнопки, цены, ссылки)</label>
+      <div class="color-row"><input type="color" id="c-acc" value="#4d9aff" oninput="csync('c-acc')"><input type="text" id="c-acc-t" value="#4d9aff" oninput="ctxt('c-acc')"></div></div>
+    <div class="fg"><label>Фон приложения</label>
+      <div class="color-row"><input type="color" id="c-bg" value="#0a0d14" oninput="csync('c-bg')"><input type="text" id="c-bg-t" value="#0a0d14" oninput="ctxt('c-bg')"></div></div>
+    <div class="fg"><label>Фон карточек</label>
+      <div class="color-row"><input type="color" id="c-card" value="#0f1420" oninput="csync('c-card')"><input type="text" id="c-card-t" value="#0f1420" oninput="ctxt('c-card')"></div></div>
+    <div class="fg"><label>Основной текст</label>
+      <div class="color-row"><input type="color" id="c-txt" value="#e8eaf0" oninput="csync('c-txt')"><input type="text" id="c-txt-t" value="#e8eaf0" oninput="ctxt('c-txt')"></div></div>
+    <div class="sep">Форма и типографика</div>
+    <div class="fg"><label>Скругление карточек</label>
+      <div class="range-row"><input type="range" id="r-rad" min="4" max="28" value="16" oninput="upd();document.getElementById('r-rad-v').textContent=this.value+'px'"><span class="range-val" id="r-rad-v">16px</span></div></div>
+    <div class="fg"><label>Размер заголовков</label>
+      <div class="range-row"><input type="range" id="r-title" min="16" max="30" value="22" oninput="upd();document.getElementById('r-title-v').textContent=this.value+'px'"><span class="range-val" id="r-title-v">22px</span></div></div>
+    <div class="fg"><label>Размер цены в тарифе</label>
+      <div class="range-row"><input type="range" id="r-price" min="14" max="26" value="17" oninput="upd();document.getElementById('r-price-v').textContent=this.value+'px'"><span class="range-val" id="r-price-v">17px</span></div></div>
+    <div class="sep">Кнопка «Купить»</div>
+    <div class="fg"><label>Форма кнопки</label>
+      <div class="chip-group">
+        <div class="chip active" id="btn-rounded" onclick="setBtnShape('rounded',this)">Скруглённая</div>
+        <div class="chip" id="btn-pill" onclick="setBtnShape('pill',this)">Пилюля</div>
+        <div class="chip" id="btn-sharp" onclick="setBtnShape('sharp',this)">Острая</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-fx">
+    <div class="sep" style="margin-top:0;">Визуальные эффекты</div>
+    <div class="fx-chip" id="fx-glow" onclick="toggleFx('glow',this)">
+      <div class="fx-chip-icon">✨</div><div><div class="fx-chip-label">Glow кнопки</div><div class="fx-chip-desc">Светящийся ореол вокруг «Купить»</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="fx-chip active" id="fx-pulse" onclick="toggleFx('pulse',this)">
+      <div class="fx-chip-icon">💫</div><div><div class="fx-chip-label">Пульс иконки</div><div class="fx-chip-desc">Анимация иконки подписки</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="fx-chip" id="fx-shimmer" onclick="toggleFx('shimmer',this)">
+      <div class="fx-chip-icon">🌟</div><div><div class="fx-chip-label">Shimmer цены</div><div class="fx-chip-desc">Бегущий блик по ценам тарифов</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="fx-chip" id="fx-gradient" onclick="toggleFx('gradient',this)">
+      <div class="fx-chip-icon">🎨</div><div><div class="fx-chip-label">Градиент кнопки</div><div class="fx-chip-desc">Градиентная заливка вместо сплошной</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="fx-chip" id="fx-float" onclick="toggleFx('float',this)">
+      <div class="fx-chip-icon">🌊</div><div><div class="fx-chip-label">Float тарифов</div><div class="fx-chip-desc">Плавное появление карточек</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="fx-chip" id="fx-scan" onclick="toggleFx('scan',this)">
+      <div class="fx-chip-icon">📡</div><div><div class="fx-chip-label">Scan-линия</div><div class="fx-chip-desc">Сканирующая полоса на фоне</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="fx-chip" id="fx-particles" onclick="toggleFx('particles',this)">
+      <div class="fx-chip-icon">⚡</div><div><div class="fx-chip-label">Частицы</div><div class="fx-chip-desc">Плавающие точки на фоне</div></div><div class="fx-check">✓</div>
+    </div>
+    <div class="sep">Интенсивность</div>
+    <div class="fg"><label>Размер свечения (glow)</label>
+      <div class="range-row"><input type="range" id="r-glow" min="5" max="40" value="20" oninput="upd();document.getElementById('r-glow-v').textContent=this.value+'px'"><span class="range-val" id="r-glow-v">20px</span></div></div>
+    <div class="fg"><label>Скорость анимаций</label>
+      <div class="chip-group">
+        <div class="chip" id="spd-slow" onclick="setSpeed('slow',this)">Медленно</div>
+        <div class="chip active" id="spd-normal" onclick="setSpeed('normal',this)">Нормально</div>
+        <div class="chip" id="spd-fast" onclick="setSpeed('fast',this)">Быстро</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="preview-area">
+  <div class="preview-top">
+    <span class="preview-label">Превью:</span>
+    <div class="page-nav">
+      <button class="page-btn active" onclick="setPage('home',this)">Главная</button>
+      <button class="page-btn" onclick="setPage('subs',this)">Тарифы</button>
+      <button class="page-btn" onclick="setPage('plan',this)">Период</button>
+      <button class="page-btn" onclick="setPage('pay',this)">Оплата</button>
+    </div>
+    <button class="dl-btn" onclick="doDownload()">⬇ Скачать HTML</button>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone-notch"></div>
+    <div class="phone-frame"><iframe id="preview" srcdoc=""></iframe></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted2);">
+    <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;"></div>
+    Превью обновляется в реальном времени
+  </div>
+</div>
+
+<div class="ai-panel">
+  <div class="ai-head">
+    <h3>✦ AI Редактор</h3>
+    <p>Claude меняет приложение по вашим словам</p>
+  </div>
+  <div class="ai-msgs" id="ai-msgs">
+    <div class="msg ai">Привет! Опишите что хотите изменить:<br><br>
+      <em>«Зелёный акцент + свечение кнопки»</em><br>
+      <em>«Добавь тариф Pro за 399₽»</em><br>
+      <em>«Светлая тема, все эффекты включить»</em>
+    </div>
+  </div>
+  <div class="qps">
+    <div class="qp" onclick="qp('Зелёный акцент + включи glow на кнопке')">🟢 Зелёный + glow</div>
+    <div class="qp" onclick="qp('Добавь тариф Pro за 399₽ на 1 и 3 месяца')">➕ Тариф Pro</div>
+    <div class="qp" onclick="qp('Светлая тема, синий акцент')">☀️ Светлая тема</div>
+    <div class="qp" onclick="qp('Пурпурная тема, частицы и shimmer')">💜 Пурпур + FX</div>
+    <div class="qp" onclick="qp('Включи все эффекты')">✨ Все эффекты</div>
+    <div class="qp" onclick="qp('Красная тема, острые углы, scan-линия')">🔴 Киберпанк</div>
+    <div class="qp" onclick="qp('Кнопку сделай в форме пилюли')">💊 Пилюля</div>
+    <div class="qp" onclick="qp('Переименуй бота в WOLF VPN')">✏️ Переименовать</div>
+  </div>
+  <div class="ai-in-row">
+    <textarea id="ai-in" placeholder="Опишите изменение..." rows="1" onkeydown="aiKey(event)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendAI()">➤</button>
+  </div>
+</div>
+
+</div>
+<script>
+var plans=[
+  {name:'Premium',icon:'⚡',desc:'Максимальная скорость.',tag:'∞ Безлимит · 1 устройство',price:'199',periods:[{l:'1 месяц',p:'199.00',pm:'199.00'},{l:'3 месяца',p:'499.00',pm:'166.33'},{l:'6 месяцев',p:'859.00',pm:'143.16'},{l:'365 дней',p:'1590.00',pm:'132.50'}]},
+  {name:'Premium + Антиглушилка',icon:'🔥',desc:'Обход блокировок, белые списки.',tag:'∞ Безлимит · 1 устройство',price:'599',periods:[{l:'1 месяц',p:'599.00',pm:'599.00'},{l:'3 месяца',p:'1499.00',pm:'499.67'},{l:'6 месяцев',p:'2599.00',pm:'433.17'},{l:'365 дней',p:'4999.00',pm:'416.58'}]},
+  {name:'Family Premium',icon:'👨‍👩‍👧',desc:'Для всей семьи.',tag:'∞ Безлимит · 6 устройств',price:'899',periods:[{l:'1 месяц',p:'899.00',pm:'899.00'},{l:'3 месяца',p:'2299.00',pm:'766.33'},{l:'6 месяцев',p:'3999.00',pm:'666.50'},{l:'365 дней',p:'6999.00',pm:'583.25'}]}
+];
+var fx={glow:false,pulse:true,shimmer:false,gradient:false,float:false,scan:false,particles:false};
+var btnShape='rounded';
+var animSpeed='normal';
+var currentPage='home';
+var aiLoading=false;
+
+function switchTab(name){
+  var names=['brand','plans','style','fx'];
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',names[i]===name);});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='plans')renderPlanEditor();
+}
+function tog(el){el.classList.toggle('on');upd();}
+function toggleFx(name,el){fx[name]=!fx[name];el.classList.toggle('active');upd();}
+function setSpeed(s,el){animSpeed=s;document.querySelectorAll('[id^=spd-]').forEach(function(c){c.classList.remove('active');});el.classList.add('active');upd();}
+function setBtnShape(s,el){btnShape=s;document.querySelectorAll('[id^=btn-]').forEach(function(c){c.classList.remove('active');});el.classList.add('active');upd();}
+
+var presets={
+  dark:{bg:'#0a0d14',card:'#0f1420',acc:'#4d9aff',txt:'#e8eaf0'},
+  light:{bg:'#f0f4ff',card:'#ffffff',acc:'#2563eb',txt:'#1a2030'},
+  green:{bg:'#060e08',card:'#0a1a0d',acc:'#22c55e',txt:'#d8f0df'},
+  purple:{bg:'#0a0710',card:'#110d1e',acc:'#a855f7',txt:'#e8d8ff'},
+  red:{bg:'#0f0608',card:'#1a0a0d',acc:'#ef4444',txt:'#fde8e8'}
+};
+function applyPreset(name,el){
+  var p=presets[name];
+  setC('c-bg',p.bg);setC('c-card',p.card);setC('c-acc',p.acc);setC('c-txt',p.txt);
+  document.querySelectorAll('.chip-group:first-of-type .chip').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');upd();
+}
+function setC(id,val){document.getElementById(id).value=val;document.getElementById(id+'-t').value=val;}
+function csync(id){var v=document.getElementById(id).value;document.getElementById(id+'-t').value=v;upd();}
+function ctxt(id){var v=document.getElementById(id+'-t').value;if(/^#[0-9a-fA-F]{6}$/.test(v)){document.getElementById(id).value=v;upd();}}
+
+function renderPlanEditor(){
+  var h='';
+  plans.forEach(function(p,i){
+    h+='<div class="plan-item"><button class="del-btn" onclick="delPlan('+i+')">✕</button>';
+    h+='<div class="plan-badge">Тариф '+(i+1)+'</div>';
+    h+='<div class="plan-fields">';
+    h+='<input type="text" class="full" placeholder="Название" value="'+e(p.name)+'" oninput="plans['+i+'].name=this.value;upd()">';
+    h+='<input type="text" placeholder="Иконка" value="'+e(p.icon)+'" oninput="plans['+i+'].icon=this.value;upd()" style="font-size:14px;">';
+    h+='<input type="text" placeholder="Цена от (₽)" value="'+e(p.price)+'" oninput="plans['+i+'].price=this.value;upd()">';
+    h+='<input type="text" class="full" placeholder="Описание" value="'+e(p.desc)+'" oninput="plans['+i+'].desc=this.value;upd()">';
+    h+='<input type="text" class="full" placeholder="Тег" value="'+e(p.tag)+'" oninput="plans['+i+'].tag=this.value;upd()">';
+    h+='</div><div class="period-mini"><div class="period-mini-label">Периоды</div>';
+    p.periods.forEach(function(per,j){
+      h+='<div class="period-row">';
+      h+='<input type="text" value="'+e(per.l)+'" oninput="plans['+i+'].periods['+j+'].l=this.value;upd()" placeholder="Период">';
+      h+='<input type="text" value="'+e(per.p)+'" oninput="plans['+i+'].periods['+j+'].p=this.value;upd()" placeholder="Цена">';
+      h+='<input type="text" value="'+e(per.pm)+'" oninput="plans['+i+'].periods['+j+'].pm=this.value;upd()" placeholder="₽/мес">';
+      h+='</div>';
+    });
+    h+='<button class="add-period-btn" onclick="addPeriod('+i+')">+ период</button></div></div>';
+  });
+  document.getElementById('plans-list').innerHTML=h;
+}
+function addPlan(){plans.push({name:'Новый тариф',icon:'🚀',desc:'Описание тарифа.',tag:'∞ Безлимит · 1 устройство',price:'299',periods:[{l:'1 месяц',p:'299.00',pm:'299.00'}]});renderPlanEditor();upd();}
+function delPlan(i){if(plans.length>1){plans.splice(i,1);renderPlanEditor();upd();}}
+function addPeriod(i){plans[i].periods.push({l:'',p:'',pm:''});renderPlanEditor();upd();}
+
+function v(id){var el=document.getElementById(id);return el?el.value:'';}
+function isOn(id){var el=document.getElementById(id);return el?el.classList.contains('on'):true;}
+function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function shade(hex,pct){
+  try{hex=hex.replace('#','');if(hex.length===3)hex=hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var r=Math.max(0,Math.min(255,parseInt(hex.substr(0,2),16)+pct));
+  var g=Math.max(0,Math.min(255,parseInt(hex.substr(2,2),16)+pct));
+  var b=Math.max(0,Math.min(255,parseInt(hex.substr(4,2),16)+pct));
+  return '#'+('0'+r.toString(16)).slice(-2)+('0'+g.toString(16)).slice(-2)+('0'+b.toString(16)).slice(-2);}catch(ex){return hex;}
+}
+
+function genHTML(initPage){
+  var bg=v('c-bg')||'#0a0d14',acc=v('c-acc')||'#4d9aff',card=v('c-card')||'#0f1420',txt=v('c-txt')||'#e8eaf0';
+  var rad=v('r-rad')||'16',ts=v('r-title')||'22',ps=v('r-price')||'17',gp=v('r-glow')||'20';
+  var bot=v('f-botname'),em=v('f-emoji'),usr=v('f-username'),grp=v('f-usergroup');
+  var cta=v('f-cta'),ctasub=v('f-ctasub'),btnlabel=v('f-btnlabel')||'Купить';
+  var p1n=v('f-p1n'),p1d=v('f-p1d'),p1r=v('f-p1r');
+  var p2n=v('f-p2n'),p2d=v('f-p2d'),p2r=v('f-p2r');
+  var showLogo=isOn('t-logo'),showBal=isOn('t-bal'),showRef=isOn('t-ref'),showGrp=isOn('t-grp');
+  var dark=shade(bg,-18),border=shade(bg,28),muted=shade(txt,-80);
+  var spd={slow:'1.8s',normal:'1.2s',fast:'0.6s'}[animSpeed]||'1.2s';
+  var spd2={slow:'3s',normal:'2s',fast:'1s'}[animSpeed]||'2s';
+  var btnR={rounded:rad+'px',pill:'50px',sharp:'4px'}[btnShape]||rad+'px';
+  var glowPx=parseInt(gp);
+
+  var fxCSS='';
+  if(fx.glow)fxCSS+='.buy-btn{box-shadow:0 0 '+glowPx+'px '+(glowPx/2)+'px '+acc+'55,0 0 '+(glowPx*2)+'px '+acc+'22;}';
+  if(fx.pulse)fxCSS+='.hero-icon{animation:heroA '+spd2+' ease-in-out infinite;}@keyframes heroA{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.09);opacity:.82;}}';
+  if(fx.shimmer)fxCSS+='.pplan-price{background:linear-gradient(90deg,'+acc+' 0%,#fff 45%,'+acc+' 80%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shim '+spd+' linear infinite;}@keyframes shim{0%{background-position:200%}100%{background-position:-200%}}';
+  if(fx.gradient)fxCSS+='.buy-btn{background:linear-gradient(135deg,'+acc+','+shade(acc,35)+')!important;}';
+  if(fx.float)fxCSS+='.plan-card{animation:fIn '+spd+' both;}.plan-card:nth-child(2){animation-delay:.1s;}.plan-card:nth-child(3){animation-delay:.2s;}@keyframes fIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}';
+  if(fx.scan)fxCSS+='body::before{content:"";position:fixed;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,'+acc+'88,transparent);animation:scan '+spd2+' linear infinite;z-index:99;pointer-events:none;}@keyframes scan{0%{top:0}100%{top:100vh}}';
+  if(fx.particles)fxCSS+='.pt{position:fixed;width:3px;height:3px;border-radius:50%;background:'+acc+'55;animation:pf var(--d) var(--dl) linear infinite;pointer-events:none;}@keyframes pf{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10px) translateX(var(--x));opacity:0}}';
+
+  var planCards=plans.map(function(p,i){
+    return '<div class="plan-card card" onclick="goP(\'plan-'+i+'\')">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<div style="width:40px;height:40px;border-radius:10px;background:'+shade(acc,-80)+';display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">'+e(p.icon)+'</div>'
+      +'<div style="flex:1;"><div style="font-size:15px;font-weight:700;">'+e(p.name)+'</div>'
+      +'<div style="font-size:11px;color:'+muted+';margin-top:2px;">'+e(p.desc)+'</div>'
+      +'<div style="font-size:10px;color:'+acc+';background:'+shade(acc,-80)+';border-radius:4px;padding:2px 7px;display:inline-block;margin-top:4px;font-weight:600;">'+e(p.tag)+'</div></div>'
+      +'<div style="text-align:right;"><div class="pplan-price" style="font-size:'+ps+'px;font-weight:700;color:'+acc+';">'+e(p.price)+' ₽</div>'
+      +'<div style="font-size:10px;color:'+muted+';">от / мес</div></div>'
+      +'</div></div>';
+  }).join('');
+
+  var planPages=plans.map(function(p,i){
+    var perCards=p.periods.map(function(per,j){
+      return '<div class="pcard'+(j===0?' sel':'')+'" onclick="selP(this,\''+e(per.l)+'\',\''+e(per.p)+'\',\''+e(per.pm)+'\','+i+')">'
+        +'<div style="font-size:13px;font-weight:600;margin-bottom:3px;">'+e(per.l)+'</div>'
+        +'<div style="font-size:15px;font-weight:700;color:'+acc+';">'+e(per.p)+' ₽</div>'
+        +'<div style="font-size:10px;color:'+muted+';margin-top:2px;">'+e(per.pm)+' ₽/мес</div>'
+        +'</div>';
+    }).join('');
+    return '<div class="page" id="page-plan-'+i+'">'
+      +'<div class="back" onclick="goP(\'subs\')">‹ Назад</div>'
+      +'<div class="ptitle">'+e(p.name)+'</div>'
+      +'<div style="font-size:12px;color:'+muted+';background:'+card+';border:0.5px solid '+border+';border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;gap:16px;">'
+      +'<span>Трафик: <strong style="color:'+txt+';">∞ Безлимит</strong></span>'
+      +'<span>Устройства: <strong style="color:'+txt+';">'+e((p.tag.match(/\d+/)||['1'])[0])+'</strong></span></div>'
+      +'<div class="pgrid">'+perCards+'</div>'
+      +'<div class="scard">'
+      +'<div class="srow"><span id="sl-'+i+'">'+(p.periods[0]?e(p.periods[0].l):' ')+'</span><span id="sp-'+i+'">'+(p.periods[0]?e(p.periods[0].p):' ')+' ₽</span></div>'
+      +'<div class="srow tot"><span>К оплате</span><span id="st-'+i+'" style="font-size:18px;font-weight:700;color:'+acc+';">'+(p.periods[0]?e(p.periods[0].p):' ')+' ₽</span></div>'
+      +'</div>'
+      +'<button class="buy-btn" onclick="goP(\'pay\')">'+e(btnlabel)+'</button>'
+      +'</div>';
+  }).join('');
+
+  var partHTML=fx.particles?'<div id="pw"></div>':'';
+
+  return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+e(bot)+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:\'Manrope\',sans-serif;background:'+bg+';color:'+txt+';min-height:100vh;overflow-x:hidden;}'
+    +'.app{max-width:430px;margin:0 auto;display:flex;flex-direction:column;min-height:100vh;}'
+    +'.hdr{display:flex;align-items:center;padding:11px 13px 9px;gap:8px;background:'+dark+';border-bottom:0.5px solid '+border+';position:sticky;top:0;z-index:50;}'
+    +'.logo{width:32px;height:32px;border-radius:9px;background:'+shade(bg,12)+';display:flex;align-items:center;justify-content:center;font-size:16px;'+(showLogo?'':'display:none;')+'}'
+    +'.hname{font-size:14px;font-weight:700;flex:1;}'
+    +'.hbadge{background:'+shade(bg,18)+';border:0.5px solid '+border+';border-radius:7px;padding:3px 8px;font-size:11px;color:'+acc+';}'
+    +'.hic{width:27px;height:27px;border-radius:7px;background:'+shade(bg,10)+';display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;margin-left:3px;}'
+    +'.ct{flex:1;overflow-y:auto;padding:16px 13px;}'
+    +'.page{display:none;}.page.active{display:block;}'
+    +'.ptitle{font-size:'+ts+'px;font-weight:700;margin-bottom:16px;}'
+    +'.card{background:'+card+';border:0.5px solid '+border+';border-radius:'+rad+'px;padding:13px;margin-bottom:9px;cursor:pointer;transition:border-color .15s;}'
+    +'.card:hover{border-color:'+acc+';}'
+    +'.back{font-size:13px;font-weight:500;color:'+acc+';cursor:pointer;margin-bottom:14px;display:inline-flex;align-items:center;gap:4px;}'
+    +'.gbadge{background:'+shade('#0f2a1a',0)+';border:0.5px solid #1a4a2a;border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:9px;margin-bottom:13px;}'
+    +'.gift{width:32px;height:32px;background:#1a4a2a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}'
+    +'.hero{background:'+shade(card,5)+';border:0.5px solid '+border+';border-radius:'+rad+'px;padding:14px;margin-bottom:11px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .15s;}'
+    +'.hero:hover{border-color:'+acc+';}'
+    +'.hero-icon{width:42px;height:42px;background:#c0392b22;border:0.5px solid #c0392b44;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;}'
+    +'.sgrid{display:grid;grid-template-columns:'+(showBal&&showRef?'1fr 1fr':showBal||showRef?'1fr':'0')+';gap:9px;margin-bottom:11px;}'
+    +'.sc{background:'+card+';border:0.5px solid '+border+';border-radius:'+rad+'px;padding:11px;}'
+    +'.sl{font-size:11px;color:'+muted+';margin-bottom:4px;}'
+    +'.sv{font-size:20px;font-weight:700;color:'+acc+';}'
+    +'.bs{background:'+shade(bg,18)+';border:0.5px solid '+border+';border-radius:18px;padding:3px 9px;font-size:11px;color:'+acc+';}'
+    +'.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px;}'
+    +'.pcard{background:'+card+';border:1.5px solid '+border+';border-radius:'+rad+'px;padding:11px;cursor:pointer;transition:all .15s;}'
+    +'.pcard.sel{border-color:'+acc+';background:'+shade(acc,-85)+';}'
+    +'.scard{background:'+card+';border:0.5px solid '+border+';border-radius:'+rad+'px;padding:11px;margin-bottom:13px;}'
+    +'.srow{display:flex;justify-content:space-between;font-size:12px;color:'+muted+';padding:4px 0;border-bottom:0.5px solid '+border+';}'
+    +'.srow.tot{border:none;font-size:14px;color:'+txt+';font-weight:600;padding-top:8px;}'
+    +'.paym{display:flex;align-items:center;gap:11px;background:'+card+';border:1.5px solid '+border+';border-radius:'+rad+'px;padding:13px;cursor:pointer;margin-bottom:9px;transition:border-color .15s;}'
+    +'.paym:hover{border-color:'+acc+';}'
+    +'.payic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:'+shade(bg,10)+';}'
+    +'.buy-btn{width:100%;background:'+acc+';color:#fff;border:none;border-radius:'+btnR+';padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:\'Manrope\',sans-serif;transition:opacity .15s,transform .1s;}'
+    +'.buy-btn:hover{opacity:.9;}.buy-btn:active{transform:scale(.97);}'
+    +'.bnav{display:flex;background:'+dark+';border-top:0.5px solid '+border+';padding:5px 0 9px;position:sticky;bottom:0;}'
+    +'.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;}'
+    +'.ni-i{font-size:18px;}.ni-l{font-size:9px;font-weight:600;color:'+muted+';}'
+    +'.ni.active .ni-l{color:'+acc+';}'
+    +fxCSS
+    +'</style></head><body>'
+    +partHTML
+    +'<div class="app">'
+    +'<div class="hdr">'
+    +(showLogo?'<div class="logo">'+em+'</div>':'')
+    +'<span class="hname">'+e(bot)+'</span>'
+    +'<div class="hic">🌙</div><div class="hic">🔔</div>'
+    +'<div class="hbadge">🇷🇺 RU</div>'
+    +'</div>'
+    +'<div class="ct">'
+    +'<div class="page" id="page-home">'
+    +'<div style="font-size:'+Math.round(parseInt(ts)*1.04)+'px;font-weight:700;margin-bottom:3px;">Добро пожаловать, '+e(usr)+'!</div>'
+    +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:16px;"><span style="font-size:11px;color:'+muted+';">Ваша подписка</span><span class="bs">⭐ '+e(grp)+'</span></div>'
+    +'<div class="hero" onclick="goP(\'subs\')">'
+    +'<div class="hero-icon">✨</div>'
+    +'<div><div style="font-size:14px;font-weight:700;margin-bottom:2px;">'+e(cta)+'</div><div style="font-size:12px;color:'+muted+';">'+e(ctasub)+'</div></div>'
+    +'<div style="margin-left:auto;font-size:17px;color:'+muted+';">›</div></div>'
+    +'<div class="sgrid">'
+    +(showBal?'<div class="sc"><div class="sl">💳 Баланс</div><div class="sv">0.00 ₽</div></div>':'')
+    +(showRef?'<div class="sc"><div class="sl">👥 Рефералы</div><div class="sv" style="color:'+txt+';">0</div></div>':'')
+    +'</div></div>'
+    +'<div class="page" id="page-subs">'
+    +'<div class="back" onclick="goP(\'home\')">‹ Назад</div>'
+    +'<div class="ptitle">Оформить подписку</div>'
+    +(showGrp?'<div class="gbadge"><div class="gift">🎁</div><div><div style="font-size:13px;font-weight:600;color:#4acd82;">Ваша группа: '+e(grp)+'</div><div style="font-size:10px;color:#2a7a4a;margin-top:1px;">Персональные скидки применены</div></div></div>':'')
+    +planCards
+    +'</div>'
+    +planPages
+    +'<div class="page" id="page-pay">'
+    +'<div class="back" onclick="history.go(-1)">‹ Назад</div>'
+    +'<div class="ptitle">Выберите способ оплаты</div>'
+    +'<div class="paym"><div class="payic">🅿️</div><div><div style="font-size:14px;font-weight:600;">'+e(p1n)+'</div><div style="font-size:11px;color:'+muted+';margin-top:1px;">'+e(p1d)+'</div><div style="font-size:10px;color:'+shade(muted,-20)+';margin-top:2px;">'+e(p1r)+'</div></div><div style="margin-left:auto;font-size:16px;color:'+muted+';">›</div></div>'
+    +'<div class="paym"><div class="payic">⭐</div><div><div style="font-size:14px;font-weight:600;">'+e(p2n)+'</div><div style="font-size:11px;color:'+muted+';margin-top:1px;">'+e(p2d)+'</div><div style="font-size:10px;color:'+shade(muted,-20)+';margin-top:2px;">'+e(p2r)+'</div></div><div style="margin-left:auto;font-size:16px;color:'+muted+';">›</div></div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="bnav">'
+    +'<div class="ni active" id="ni-home" onclick="navTo(\'home\')"><div class="ni-i">🏠</div><div class="ni-l">Главная</div></div>'
+    +'<div class="ni" id="ni-subs" onclick="navTo(\'subs\')"><div class="ni-i">✨</div><div class="ni-l">Подписка</div></div>'
+    +'<div class="ni"><div class="ni-i">💳</div><div class="ni-l">Баланс</div></div>'
+    +'<div class="ni"><div class="ni-i">👥</div><div class="ni-l">Рефералы</div></div>'
+    +'<div class="ni"><div class="ni-i">💬</div><div class="ni-l">Поддержка</div></div>'
+    +'</div></div>'
+    +'<script>'
+    +'var _h=["'+initPage+'"];'
+    +'document.addEventListener("DOMContentLoaded",function(){goP("'+initPage+'");'+(fx.particles?'spawnPt();':'')+'});'
+    +'function goP(id){document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active");});var el=document.getElementById("page-"+id);if(el)el.classList.add("active");_h.push(id);var m={home:"ni-home",subs:"ni-subs"};document.querySelectorAll(".ni").forEach(function(n){n.classList.remove("active");});if(m[id])document.getElementById(m[id]).classList.add("active");}'
+    +'function navTo(id){_h=[id];goP(id);}'
+    +'history.go=function(n){if(n===-1&&_h.length>1){_h.pop();goP(_h[_h.length-1]);}};'
+    +'function selP(el,l,p,pm,i){el.parentElement.querySelectorAll(".pcard").forEach(function(c){c.classList.remove("sel");});el.classList.add("sel");var sl=document.getElementById("sl-"+i),sp=document.getElementById("sp-"+i),st=document.getElementById("st-"+i);if(sl)sl.textContent=l;if(sp)sp.textContent=p+" ₽";if(st)st.textContent=p+" ₽";}'
+    +(fx.particles?'function spawnPt(){var w=document.getElementById("pw");for(var i=0;i<16;i++){var d=document.createElement("div");d.className="pt";var x=(Math.random()-0.5)*180;d.style.cssText="left:"+Math.random()*100+"vw;--d:"+(2+Math.random()*4)+"s;--dl:"+Math.random()*4+"s;--x:"+x+"px;";w.appendChild(d);}}':'')
+    +'<\/script></body></html>';
+}
+
+function setPage(p,btn){currentPage=p;document.querySelectorAll('.page-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');upd();}
+function getInit(){return {home:'home',subs:'subs',plan:plans.length>0?'plan-0':'subs',pay:'pay'}[currentPage]||'home';}
+function upd(){document.getElementById('preview').srcdoc=genHTML(getInit());}
+
+function doDownload(){
+  var html=genHTML('home');
+  var blob=new Blob([html],{type:'text/html'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(v('f-botname')||'vpn').toLowerCase().replace(/\s+/g,'-')+'-miniapp.html';
+  a.click();
+}
+
+function aiKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+function qp(t){document.getElementById('ai-in').value=t;sendAI();}
+function addMsg(html,role){var d=document.createElement('div');d.className='msg '+role;d.innerHTML=html;document.getElementById('ai-msgs').appendChild(d);d.scrollIntoView({behavior:'smooth'});return d;}
+
+async function sendAI(){
+  if(aiLoading)return;
+  var inp=document.getElementById('ai-in');
+  var txt=inp.value.trim();if(!txt)return;
+  inp.value='';addMsg(txt,'user');
+  var ld=addMsg('<span class="dot"></span><span class="dot"></span><span class="dot"></span>','ai');
+  document.getElementById('send-btn').disabled=true;aiLoading=true;
+
+  var sys='Ты — ассистент конструктора Telegram VPN Mini App.\n'
+    +'Текущие настройки:\n'
+    +'Название: '+v('f-botname')+', Эмодзи: '+v('f-emoji')+', Пользователь: '+v('f-username')+'\n'
+    +'Акцент: '+v('c-acc')+', Фон: '+v('c-bg')+', Карточки: '+v('c-card')+'\n'
+    +'Активные эффекты: '+Object.keys(fx).filter(function(k){return fx[k];}).join(', ')+'\n'
+    +'Тарифы: '+JSON.stringify(plans.map(function(p){return {name:p.name,price:p.price};}))+'\n\n'
+    +'Ответь ТОЛЬКО JSON без markdown. Поля:\n'
+    +'botname, emoji, username, usergroup, cta, ctasub, btnlabel,\n'
+    +'accentColor (hex), bgColor (hex), cardColor (hex), textColor (hex),\n'
+    +'radius (4-28), titleSize (16-30), priceSize (14-26), glowSize (5-40),\n'
+    +'pay1name, pay1desc, pay1range, pay2name, pay2desc, pay2range,\n'
+    +'effects: {glow,pulse,shimmer,gradient,float,scan,particles} (true/false),\n'
+    +'animSpeed ("slow"|"normal"|"fast"),\n'
+    +'btnShape ("rounded"|"pill"|"sharp"),\n'
+    +'preset ("dark"|"light"|"green"|"purple"|"red"),\n'
+    +'addPlan: {name,icon,desc,tag,price,periods:[{l,p,pm}]},\n'
+    +'message: string (краткий ответ — обязательно).\n'
+    +'Светлая тема: bgColor="#f0f4ff", cardColor="#ffffff", textColor="#1a2030".\n'
+    +'Включить все эффекты: effects:{glow:true,pulse:true,shimmer:true,gradient:true,float:true,scan:true,particles:true}.\n'
+    +'Отвечай только JSON.';
+
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:txt}]})
+    });
+    var data=await resp.json();
+    var raw=data.content&&data.content[0]?data.content[0].text:'';
+    var clean=raw.replace(/```json|```/g,'').trim();
+    var p=JSON.parse(clean);
+
+    if(p.botname)document.getElementById('f-botname').value=p.botname;
+    if(p.emoji)document.getElementById('f-emoji').value=p.emoji;
+    if(p.username)document.getElementById('f-username').value=p.username;
+    if(p.usergroup)document.getElementById('f-usergroup').value=p.usergroup;
+    if(p.cta)document.getElementById('f-cta').value=p.cta;
+    if(p.ctasub)document.getElementById('f-ctasub').value=p.ctasub;
+    if(p.btnlabel)document.getElementById('f-btnlabel').value=p.btnlabel;
+    if(p.accentColor)setC('c-acc',p.accentColor);
+    if(p.bgColor)setC('c-bg',p.bgColor);
+    if(p.cardColor)setC('c-card',p.cardColor);
+    if(p.textColor)setC('c-txt',p.textColor);
+    if(p.radius)document.getElementById('r-rad').value=p.radius;
+    if(p.titleSize)document.getElementById('r-title').value=p.titleSize;
+    if(p.priceSize)document.getElementById('r-price').value=p.priceSize;
+    if(p.glowSize)document.getElementById('r-glow').value=p.glowSize;
+    if(p.pay1name)document.getElementById('f-p1n').value=p.pay1name;
+    if(p.pay1desc)document.getElementById('f-p1d').value=p.pay1desc;
+    if(p.pay1range)document.getElementById('f-p1r').value=p.pay1range;
+    if(p.pay2name)document.getElementById('f-p2n').value=p.pay2name;
+    if(p.pay2desc)document.getElementById('f-p2d').value=p.pay2desc;
+    if(p.pay2range)document.getElementById('f-p2r').value=p.pay2range;
+    if(p.preset&&presets[p.preset]){var pr=presets[p.preset];setC('c-bg',pr.bg);setC('c-card',pr.card);setC('c-acc',pr.acc);setC('c-txt',pr.txt);}
+    if(p.effects){Object.keys(p.effects).forEach(function(k){if(k in fx){fx[k]=p.effects[k];var el=document.getElementById('fx-'+k);if(el)el.classList.toggle('active',fx[k]);}});}
+    if(p.animSpeed){animSpeed=p.animSpeed;document.querySelectorAll('[id^=spd-]').forEach(function(c){c.classList.remove('active');});var sel=document.getElementById('spd-'+p.animSpeed);if(sel)sel.classList.add('active');}
+    if(p.btnShape){btnShape=p.btnShape;document.querySelectorAll('[id^=btn-]').forEach(function(c){c.classList.remove('active');});var bs=document.getElementById('btn-'+p.btnShape);if(bs)bs.classList.add('active');}
+    if(p.addPlan){plans.push(p.addPlan);renderPlanEditor();}
+
+    ld.remove();addMsg(p.message||'Готово!','ai');upd();
+  }catch(err){ld.remove();addMsg('Ошибка. Попробуйте ещё раз.','ai');}
+  document.getElementById('send-btn').disabled=false;aiLoading=false;
+}
+
+upd();
+</script>
+</body>
+</html>
